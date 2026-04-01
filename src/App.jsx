@@ -1,864 +1,449 @@
 import { useState, useEffect } from "react";
 
-// ─── ESTILOS GLOBALES ────────────────────────────────────────────────────────
-const GlobalStyles = () => (
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;0,900;1,900&family=Nunito+Sans:wght@300;400;600&display=swap');
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Nunito Sans', sans-serif;
-      background: #FAFAFA;
-      color: #111;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    @keyframes float {
-      0%,100% { transform: translateY(0px) rotate(-2deg); }
-      50%      { transform: translateY(-18px) rotate(3deg); }
-    }
-    @keyframes marquee {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-    @keyframes fadeUp {
-      from { opacity:0; transform:translateY(24px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-    .animate-float { animation: float 4s ease-in-out infinite; }
-    .animate-fadeup { animation: fadeUp .7s ease forwards; }
-    .marquee-track { animation: marquee 45s linear infinite; }
+// ── DATOS ──────────────────────────────────────────────────────────────────
+const categories = [
+  { id: "acetato",    name: "Acetato",     image: "https://images.unsplash.com/photo-1761896906649-f95c9d061e1b?w=800", description: "Diseños clásicos y modernos", accent: "#c8a96e" },
+  { id: "metal",      name: "Metal",       image: "https://images.unsplash.com/photo-1749527306067-a30652c9e885?w=800", description: "Elegantes y ligeros",        accent: "#8fb3c8" },
+  { id: "3piezas",   name: "3 Piezas",    image: "https://images.unsplash.com/photo-1762718900539-c51799fd71b3?w=800", description: "Minimalistas y sofisticados",accent: "#a8c4a2" },
+  { id: "ninos",     name: "Niños",       image: "https://images.unsplash.com/photo-1720575786473-5ad162acbe3f?w=800", description: "Resistentes y divertidos",  accent: "#e8a87c" },
+  { id: "graduados", name: "Graduados",   image: "https://images.unsplash.com/photo-1760446032123-f66e0c7a005b?w=800", description: "Lentes pre-graduados",      accent: "#b8a0d4" },
+  { id: "micas",     name: "Micas",       image: "https://images.unsplash.com/photo-1762432837041-381e6b15b474?w=800", description: "Graduaciones y tratamientos",accent: "#7ec8c8" },
+  { id: "accesorios",name: "Accesorios",  image: "https://images.unsplash.com/photo-1755719401891-327552d72892?w=800", description: "Estuches, franelas y sprays",accent: "#d4a0a0" },
+  { id: "refacciones",name:"Refacciones", image: "https://images.unsplash.com/photo-1592075761608-07fbdec431ba?w=800", description: "Mariposas, correas y más",  accent: "#c4b89a" },
+  { id: "reparacion",name: "Reparación",  image: "https://images.unsplash.com/photo-1585600738948-cec7f1b2927b?w=800", description: "Cambios de piezas",         accent: "#98b4d4" },
+];
 
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 12px 28px; border-radius: 999px;
-      font-family: 'Nunito', sans-serif; font-weight: 900;
-      font-size: 14px; cursor: pointer; border: 2.5px solid #111;
-      transition: transform .15s, box-shadow .15s;
-      text-decoration: none;
-    }
-    .btn:hover { transform: translateY(-2px); box-shadow: 4px 4px 0 #111; }
-    .btn:active { transform: translateY(0); box-shadow: none; }
-    .btn-fill   { background: #A161E2; color: #fff; border-color: #111; }
-    .btn-outline { background: #fff; color: #111; }
-    .btn-dark   { background: #111; color: #fff; }
-    .btn-light  { background: #E8F0FD; color: #5A2E93; border-color: #5A2E93; }
-
-    .frame-card {
-      border: 2.5px solid #111; border-radius: 20px; overflow: hidden;
-      cursor: pointer; transition: transform .2s, box-shadow .2s;
-      background: #fff;
-    }
-    .frame-card:hover {
-      transform: translateY(-8px) rotate(-1deg);
-      box-shadow: 8px 8px 0 #111;
-    }
-    .filter-pill {
-      padding: 9px 22px; border-radius: 999px;
-      border: 2px solid #ccc; background: #fff;
-      font-family: 'Nunito', sans-serif; font-weight: 700;
-      font-size: 14px; cursor: pointer; transition: all .15s;
-      color: #111;
-    }
-    .filter-pill:hover {
-      background: #E8F0FD; color: #5A2E93; border-color: #5A2E93;
-    }
-    .filter-pill.active {
-      background: #5A2E93; color: #fff; border-color: #5A2E93;
-    }
-    .trat-card {
-      background: #fff; border: 2.5px solid #111; border-radius: 20px;
-      padding: 28px; display: flex; gap: 18px; align-items: flex-start;
-      transition: transform .2s, box-shadow .2s;
-    }
-    .trat-card:hover { transform: translateY(-4px); box-shadow: 6px 6px 0 #111; }
-    .step-card {
-      background: #1C1020; border: 2px solid #3D2060;
-      border-radius: 20px; padding: 32px 24px;
-      transition: border-color .2s, transform .2s;
-    }
-    .step-card:hover { border-color: #A161E2; transform: translateY(-4px); }
-    .opt-pill {
-      padding: 9px 18px; border-radius: 999px;
-      border: 2px solid #ccc; background: #fff;
-      font-family: 'Nunito', sans-serif; font-weight: 700;
-      font-size: 13px; cursor: pointer; transition: all .15s;
-      display: flex; align-items: center; gap: 6px;
-      color: #111;
-    }
-    .opt-pill:hover { border-color: #5A2E93; color: #5A2E93; background: #F3EEFF; }
-    .opt-pill.sel { background: #5A2E93; color: #fff; border-color: #5A2E93; }
-    .modal-input {
-      width: 100%; padding: 12px 16px;
-      border: 2px solid #e0e0e0; border-radius: 12px;
-      font-family: 'Nunito Sans', sans-serif; font-size: 15px;
-      margin-bottom: 10px; outline: none;
-      transition: border-color .15s;
-    }
-    .modal-input:focus { border-color: #5A2E93; }
-    .nav-link {
-      font-size: 14px; font-weight: 600; color: #111;
-      text-decoration: none; cursor: pointer;
-      transition: color .15s; background:none; border:none;
-    }
-    .nav-link:hover { color: #A161E2; }
-  `}</style>
-);
-
-// ─── COLORES ─────────────────────────────────────────────────────────────────
-const C = {
-  lilaClaro:  "#E8F0FD",
-  lila:       "#A161E2",
-  morado:     "#5A2E93",
-  negro:      "#111111",
-  blanco:     "#FFFFFF",
-  grisF:      "#F5F3FA",
+const products = {
+  acetato: [
+    { id:1, name:"Armazón Clásico Negro",   price:850,  image:"https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=600", desc:"Marco acetato grueso, estilo vintage." },
+    { id:2, name:"Armazón Carey Moderno",   price:1100, image:"https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600", desc:"Patrón carey con lentes ámbar." },
+    { id:3, name:"Armazón Translúcido",     price:950,  image:"https://images.unsplash.com/photo-1508296695146-257a814070b4?w=600", desc:"Acetato transparente, look moderno." },
+    { id:4, name:"Armazón Bicolor",         price:1200, image:"https://images.unsplash.com/photo-1577803645773-f96470509666?w=600", desc:"Combinación de colores vibrantes." },
+  ],
+  metal: [
+    { id:5, name:"Aviador Dorado",          price:1300, image:"https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=600", desc:"Clásico aviador en metal dorado." },
+    { id:6, name:"Marco Fino Plateado",     price:980,  image:"https://images.unsplash.com/photo-1473496169904-658ba7574b0d?w=600", desc:"Ultra delgado, peso mínimo." },
+    { id:7, name:"Redondo Cobre",           price:1150, image:"https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600", desc:"Estilo retro en tono cobre." },
+    { id:8, name:"Rectangular Negro Mate",  price:890,  image:"https://images.unsplash.com/photo-1580628765937-dc8d1f7cc68e?w=600", desc:"Marco metálico negro mate elegante." },
+  ],
+  "3piezas": [
+    { id:9,  name:"Minimalista Titanio",    price:1600, image:"https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=600", desc:"Sin montura, máxima ligereza." },
+    { id:10, name:"Tres Piezas Plateado",   price:1450, image:"https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600", desc:"Diseño modular con bisagras ocultas." },
+    { id:11, name:"Semi Sin Montura",       price:1250, image:"https://images.unsplash.com/photo-1508296695146-257a814070b4?w=600", desc:"Montura inferior visible, superior limpia." },
+  ],
+  ninos: [
+    { id:12, name:"Armazón Flexible Azul",  price:650,  image:"https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600", desc:"Material irrompible, cómodo para niños." },
+    { id:13, name:"Carita Feliz Rosa",      price:580,  image:"https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600", desc:"Colores brillantes, diseño divertido." },
+    { id:14, name:"Deportivo Infantil",     price:720,  image:"https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600", desc:"Resistente a golpes y caídas." },
+  ],
+  graduados: [
+    { id:15, name:"Lentes +1.50 Negro",     price:450,  image:"https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=600", desc:"Pre-graduado para lectura." },
+    { id:16, name:"Lentes +2.00 Carey",     price:480,  image:"https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600", desc:"Graduación media, estilo elegante." },
+    { id:17, name:"Lentes +2.50 Dorado",    price:520,  image:"https://images.unsplash.com/photo-1508296695146-257a814070b4?w=600", desc:"Alta graduación en marco dorado." },
+  ],
+  micas: [
+    { id:18, name:"Mica Antirreflejante",   price:350,  image:"https://images.unsplash.com/photo-1584979585778-b68ca9e3bbca?w=600", desc:"Reduce reflejos y mejora visión nocturna." },
+    { id:19, name:"Mica Fotocromática",     price:680,  image:"https://images.unsplash.com/photo-1584979585778-b68ca9e3bbca?w=600", desc:"Se oscurece automáticamente al sol." },
+    { id:20, name:"Mica Blue Light",        price:420,  image:"https://images.unsplash.com/photo-1584979585778-b68ca9e3bbca?w=600", desc:"Protege de luz azul de pantallas." },
+    { id:21, name:"Mica Polarizada",        price:580,  image:"https://images.unsplash.com/photo-1584979585778-b68ca9e3bbca?w=600", desc:"Elimina deslumbramiento en exteriores." },
+  ],
+  accesorios: [
+    { id:22, name:"Estuche Premium Negro",  price:180,  image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600", desc:"Estuche rígido con forro suave." },
+    { id:23, name:"Franela Microfibra",     price:45,   image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600", desc:"Limpia sin rayar tus lentes." },
+    { id:24, name:"Spray Limpiador",        price:85,   image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600", desc:"Solución limpiadora profesional." },
+    { id:25, name:"Cordón Ajustable",       price:60,   image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600", desc:"Evita que pierdas tus lentes." },
+  ],
+  refacciones: [
+    { id:26, name:"Kit Mariposas",          price:95,   image:"https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=600", desc:"Mariposas de diferentes tamaños." },
+    { id:27, name:"Correas Nasales",        price:65,   image:"https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=600", desc:"Almohadillas de repuesto." },
+    { id:28, name:"Tornillos Surtidos",     price:50,   image:"https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=600", desc:"Kit de tornillos para armazones." },
+  ],
+  reparacion: [
+    { id:29, name:"Cambio de Mica",         price:0,    image:"https://images.unsplash.com/photo-1585600738948-cec7f1b2927b?w=600", desc:"Precio según evaluación del daño." },
+    { id:30, name:"Soldadura de Armazón",   price:0,    image:"https://images.unsplash.com/photo-1585600738948-cec7f1b2927b?w=600", desc:"Reparación de roturas en metal." },
+    { id:31, name:"Ajuste General",         price:0,    image:"https://images.unsplash.com/photo-1585600738948-cec7f1b2927b?w=600", desc:"Ajuste completo de tu armazón." },
+  ],
 };
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
-const FRAMES = [
-  { id:1, name:"Aldgate",  tipo:"metal",   precio:350, color:"#B5975A", colorName:"Dorado mate",    tag:"Nuevo"    },
-  { id:2, name:"Sorolla",  tipo:"acetato", precio:480, color:"#A161E2", colorName:"Morado cristal", tag:""         },
-  { id:3, name:"Rimini",   tipo:"3piezas", precio:420, color:"#111",    colorName:"Negro pulido",   tag:"Popular"  },
-  { id:4, name:"Mérida",   tipo:"acetato", precio:550, color:"#5A2E93", colorName:"Morado oscuro",  tag:""         },
-  { id:5, name:"Alcázar",  tipo:"metal",   precio:650, color:"#C0C0C0", colorName:"Plata cepillado",tag:"Premium"  },
-  { id:6, name:"Tulum",    tipo:"acetato", precio:490, color:"#3D7A4E", colorName:"Verde botella",  tag:""         },
-  { id:7, name:"Sevilla",  tipo:"ninos",   precio:280, color:"#E85D4A", colorName:"Rojo coral",     tag:""         },
-  { id:8, name:"Vallarta", tipo:"ninos",   precio:150, color:"#5B9BD5", colorName:"Azul cielo",     tag:"Económico"},
-  { id:9, name:"Kadena",   tipo:"3piezas", precio:390, color:"#888",    colorName:"Gris titanio",   tag:""         },
+const treatments = [
+  { emoji:"🛡️", title:"Antirreflejante", description:"Reduce reflejos molestos mejorando la claridad visual al conducir de noche o trabajar con pantallas." },
+  { emoji:"🌓", title:"Fotocromático",   description:"Lentes que se oscurecen con la luz solar y se aclaran en interiores. Protección UV total." },
+  { emoji:"💻", title:"Blue Light",      description:"Filtra la luz azul de pantallas. Reduce fatiga ocular y mejora el sueño." },
+  { emoji:"🕶️", title:"Polarizado",     description:"Elimina deslumbramiento en superficies reflectantes. Ideal para deportes y conducir." },
 ];
 
-const LENTES = [
-  { id:"mono",   nombre:"Monofocal",                       precio:0   },
-  { id:"bifocal",nombre:"Bifocal",                         precio:200 },
-  { id:"bisel",  nombre:"Biselado (micas c/graduación)",   precio:350 },
-];
-
-const GRADS = [
-  { id:"baja",   nombre:"Baja (–0.50 a –2.00)",  precio:0   },
-  { id:"media",  nombre:"Media (–2.25 a –4.00)", precio:100 },
-  { id:"alta",   nombre:"Alta (–4.25 a –6.00)",  precio:200 },
-  { id:"muyalta",nombre:"Muy Alta (–6.25+)",     precio:350 },
-];
-
-const TRATS = [
-  { id:"ar",      nombre:"Antirreflejante AR", precio:150, icon:"🔆" },
-  { id:"blue",    nombre:"Blue",               precio:200, icon:"💻" },
-  { id:"fotoblue",nombre:"Foto Blue",          precio:350, icon:"🌤️" },
-  { id:"polariz", nombre:"Polarizado",         precio:400, icon:"🕶️" },
-];
-
-const TIPOS = ["Todos","Metal","Acetato","3 Piezas","Niños"];
-const TIPO_MAP = { "Todos":"todos","Metal":"metal","Acetato":"acetato","3 Piezas":"3piezas","Niños":"ninos" };
-
-const MARQUEE_ITEMS = [
-  "Envíos a todo Mazatlán","Asesoría gratuita","Lentes con graduación",
-  "Precio justo","#CuatroOjos","Monofocal & Bifocal",
-  "Armazones de calidad","Tratamientos especializados","Atención personalizada",
-];
-
-const WHATSAPP = "526699000000"; // ← CAMBIA TU NÚMERO
-
-// ─── FRAME SVG ────────────────────────────────────────────────────────────────
-function FrameSVG({ frame, size = 170 }) {
-  const shapes = {
-    metal:    { rx:10, h:38, w:66 },
-    acetato:  { rx:16, h:44, w:64 },
-    "3piezas":{ rx:6,  h:30, w:60 },
-    ninos:    { rx:18, h:42, w:60 },
-  };
-  const s = shapes[frame.tipo] || shapes.metal;
-  const c = frame.color;
-  const W = 200, H = 100, cy = H / 2;
-  return (
-    <svg width={size} height={size * 0.55} viewBox={`0 0 ${W} ${H}`} fill="none">
-      <rect x={18} y={cy - s.h/2} width={s.w} height={s.h} rx={s.rx}
-        stroke={c} strokeWidth="4" fill={c + "18"} />
-      <rect x={W - 18 - s.w} y={cy - s.h/2} width={s.w} height={s.h} rx={s.rx}
-        stroke={c} strokeWidth="4" fill={c + "18"} />
-      <path d={`M${18+s.w} ${cy} Q${W/2} ${cy-14} ${W-18-s.w} ${cy}`}
-        stroke={c} strokeWidth="3.5" fill="none" strokeLinecap="round" />
-      <line x1={18} y1={cy} x2={0} y2={cy - 16} stroke={c} strokeWidth="3" strokeLinecap="round" />
-      <line x1={W-18} y1={cy} x2={W} y2={cy - 16} stroke={c} strokeWidth="3" strokeLinecap="round" />
-      <line x1={26} y1={cy - s.h/2 + 8} x2={36} y2={cy - s.h/2 + 16}
-        stroke="white" strokeWidth="2" strokeOpacity="0.7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-// ─── NAV ──────────────────────────────────────────────────────────────────────
-function Nav({ onPedido }) {
+// ── COMPONENTE PRINCIPAL ───────────────────────────────────────────────────
+export default function App() {
+  const [page, setPage] = useState("home");
+  const [search, setSearch] = useState("");
   const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", fn);
-    return () => window.removeEventListener("scroll", fn);
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scroll = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-
-  return (
-    <nav style={{
-      position: "sticky", top: 0, zIndex: 100,
-      background: scrolled ? "rgba(255,255,255,.95)" : C.blanco,
-      backdropFilter: scrolled ? "blur(12px)" : "none",
-      borderBottom: `2.5px solid ${C.negro}`,
-      padding: "0 40px",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      height: 68, transition: "all .3s",
-    }}>
-      {/* Logo */}
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <svg width="32" height="20" viewBox="0 0 32 20" fill="none">
-          <rect x="0" y="3" width="13" height="13" rx="6.5" stroke={C.negro} strokeWidth="2.5"/>
-          <rect x="19" y="3" width="13" height="13" rx="6.5" stroke={C.negro} strokeWidth="2.5"/>
-          <line x1="13" y1="9.5" x2="19" y2="9.5" stroke={C.negro} strokeWidth="2.5"/>
-        </svg>
-        <span style={{
-          fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:21,
-          letterSpacing:"-0.03em", color: C.negro,
-        }}>
-          Óptica <span style={{ color: C.lila }}>Lain</span>
-        </span>
-      </div>
-
-      {/* Links */}
-      <div style={{ display:"flex", gap:32, alignItems:"center" }}>
-        <button className="nav-link" onClick={() => scroll("coleccion")}>Colección</button>
-        <button className="nav-link" onClick={() => scroll("tratamientos")}>Tratamientos</button>
-        <button className="nav-link" onClick={() => scroll("proceso")}>Cómo funciona</button>
-        <button className="btn btn-fill" onClick={onPedido}>Armar pedido 👓</button>
-      </div>
-    </nav>
-  );
-}
-
-// ─── HERO ─────────────────────────────────────────────────────────────────────
-function Hero({ onPedido }) {
-  const scroll = (id) => document.getElementById(id)?.scrollIntoView({ behavior:"smooth" });
-  return (
-    <section style={{
-      display:"grid", gridTemplateColumns:"1fr 1fr",
-      minHeight:"calc(100vh - 68px)",
-      borderBottom:`2.5px solid ${C.negro}`,
-    }}>
-      {/* Texto */}
-      <div style={{
-        padding:"80px 60px", display:"flex", flexDirection:"column",
-        justifyContent:"center", borderRight:`2.5px solid ${C.negro}`,
-        background: C.blanco,
-      }}>
-        <span style={{
-          display:"inline-block", background: C.lilaClaro, color: C.morado,
-          fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:12,
-          padding:"5px 16px", borderRadius:999, border:`2px solid ${C.morado}`,
-          marginBottom:24, letterSpacing:"0.05em", width:"fit-content",
-        }}>#CuatroOjos y a mucha honra</span>
-
-        <h1 style={{
-          fontFamily:"'Nunito',sans-serif", fontWeight:900,
-          fontSize:"clamp(44px,5.5vw,74px)", lineHeight:1.05,
-          letterSpacing:"-0.03em", marginBottom:24, color: C.negro,
-        }}>
-          Te ves bien,<br />
-          <em style={{ color: C.lila, fontStyle:"italic" }}>miras bien</em>
-        </h1>
-
-        <p style={{ fontSize:17, lineHeight:1.7, color:"#555", maxWidth:400, marginBottom:40, fontWeight:300 }}>
-          Armazones chidos a precio justo, con los tratamientos que necesitas.
-          Configura tu pedido en minutos y recibe tu cotización al instante.
-        </p>
-
-        <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
-          <button className="btn btn-fill" onClick={() => scroll("coleccion")}>
-            Ver colección 👁️
-          </button>
-          <button className="btn btn-outline" onClick={onPedido}>
-            Armar mi pedido
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div style={{
-          display:"flex", gap:48, marginTop:56,
-          paddingTop:36, borderTop:`1.5px solid #e8e8e4`,
-        }}>
-          {[["500+","Clientes felices"],["15+","Años de exp."],["100%","Garantía"]].map(([n,l]) => (
-            <div key={l}>
-              <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:30, color: C.lila }}>{n}</div>
-              <div style={{ fontSize:13, color:"#888", marginTop:4 }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Visual */}
-      <div style={{
-        display:"flex",
-        alignItems:"center", justifyContent:"center",
-        position:"relative", overflow:"hidden",
-        background: `linear-gradient(135deg, ${C.lilaClaro} 0%, #F0E8FF 100%)`,
-      }}>
-        <div className="animate-float" style={{ textAlign:"center" }}>
-          <svg width="340" height="180" viewBox="0 0 340 180" fill="none">
-            <rect x="20" y="55" width="130" height="70" rx="26"
-              stroke={C.lila} strokeWidth="5.5" fill={C.lila + "18"} />
-            <rect x="190" y="55" width="130" height="70" rx="26"
-              stroke={C.lila} strokeWidth="5.5" fill={C.lila + "18"} />
-            <path d="M150 90 Q170 76 190 90"
-              stroke={C.lila} strokeWidth="5" fill="none" strokeLinecap="round" />
-            <line x1="20" y1="72" x2="0" y2="56" stroke={C.lila} strokeWidth="4.5" strokeLinecap="round" />
-            <line x1="320" y1="72" x2="340" y2="56" stroke={C.lila} strokeWidth="4.5" strokeLinecap="round" />
-            <line x1="38" y1="68" x2="56" y2="84" stroke="white" strokeWidth="3" strokeOpacity="0.7" strokeLinecap="round" />
-            <line x1="208" y1="68" x2="226" y2="84" stroke="white" strokeWidth="3" strokeOpacity="0.7" strokeLinecap="round" />
-          </svg>
-          <p style={{
-            fontFamily:"'Nunito',sans-serif", fontWeight:900,
-            fontSize:16, color: C.morado, marginTop:16,
-          }}>Sorolla — Morado Cristal</p>
-        </div>
-
-        {/* Badges flotantes */}
-        <div style={{
-          position:"absolute", top:36, left:32,
-          background: C.blanco, border:`2.5px solid ${C.negro}`,
-          borderRadius:16, padding:"14px 20px",
-          boxShadow:`5px 5px 0 ${C.negro}`,
-          fontFamily:"'Nunito',sans-serif", fontWeight:900,
-        }}>
-          <span style={{ display:"block", fontSize:28, color: C.lila, lineHeight:1 }}>9+</span>
-          <span style={{ fontSize:13 }}>modelos</span>
-        </div>
-
-        <div style={{
-          position:"absolute", bottom:36, right:32,
-          background: C.blanco, border:`2.5px solid ${C.negro}`,
-          borderRadius:16, padding:"14px 20px",
-          boxShadow:`5px 5px 0 ${C.negro}`,
-          fontFamily:"'Nunito',sans-serif", fontWeight:900,
-        }}>
-          <span style={{ fontSize:13, color:"#888" }}>Desde</span>
-          <span style={{ display:"block", fontSize:28, color: C.lila, lineHeight:1.1 }}>$350</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── MARQUEE ──────────────────────────────────────────────────────────────────
-function Marquee() {
-  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
-  return (
-    <div style={{
-      borderTop:`2.5px solid ${C.negro}`, borderBottom:`2.5px solid ${C.negro}`,
-      background: C.lila, overflow:"hidden", padding:"14px 0",
-    }}>
-      <div className="marquee-track" style={{ display:"flex", gap:60, whiteSpace:"nowrap", width:"max-content" }}>
-        {items.map((t, i) => (
-          <span key={i} style={{
-            fontFamily:"'Nunito',sans-serif", fontWeight:900,
-            fontSize:14, letterSpacing:"0.06em", textTransform:"uppercase",
-            color: C.blanco, display:"flex", alignItems:"center", gap:16,
-          }}>
-            <span style={{ width:8, height:8, borderRadius:"50%", background:"rgba(255,255,255,.5)", display:"inline-block" }} />
-            {t}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── COLECCIÓN ────────────────────────────────────────────────────────────────
-function Coleccion({ onSelectFrame }) {
-  const [filtro, setFiltro] = useState("Todos");
-  const filtered = filtro === "Todos"
-    ? FRAMES
-    : FRAMES.filter(f => f.tipo === TIPO_MAP[filtro]);
-
-  const tagColors = {
-    "Nuevo":     { bg: C.lilaClaro,  color: C.morado },
-    "Popular":   { bg: "#7C3AED",    color: "#fff"   },
-    "Premium":   { bg: C.negro,      color: "#fff"   },
-    "Económico": { bg: "#E8F5E9",    color: "#2E7D32"},
+  const navigate = (to) => {
+    setPage(to);
+    setSearch("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const currentCategory = categories.find(c => c.id === page);
+  const currentProducts = products[page] || [];
+  const filteredProducts = currentProducts.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.desc.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredCategories = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <section id="coleccion" style={{ padding:"80px 40px", background: C.blanco }}>
-      {/* Header */}
-      <div style={{ marginBottom:48 }}>
-        <span style={{
-          display:"inline-flex", alignItems:"center", gap:8,
-          fontFamily:"'Nunito',sans-serif", fontWeight:900,
-          fontSize:12, letterSpacing:"0.12em", textTransform:"uppercase",
-          background: C.lilaClaro, border:`2px solid ${C.morado}`,
-          borderRadius:999, padding:"6px 16px", marginBottom:20, color: C.morado,
-        }}>
-          <span style={{ width:8, height:8, borderRadius:"50%", background: C.lila }} />
-          Colección
-        </span>
-        <h2 style={{
-          fontFamily:"'Nunito',sans-serif", fontWeight:900,
-          fontSize:"clamp(34px,4vw,56px)", letterSpacing:"-0.03em", lineHeight:1.1,
-          color: C.negro,
-        }}>
-          Encuentra tu <em style={{ color: C.lila, fontStyle:"italic" }}>armazón ideal</em>
-        </h2>
-      </div>
+    <div style={{ fontFamily:"'DM Sans', sans-serif", color:"#1a1a2e", margin:0 }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { margin:0; }
 
-      {/* Filtros */}
-      <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:48 }}>
-        {TIPOS.map(t => (
-          <button key={t} className={`filter-pill ${filtro===t?"active":""}`}
-            onClick={() => setFiltro(t)}>{t}</button>
-        ))}
-      </div>
+        .navbar {
+          position:fixed; top:0; left:0; right:0; z-index:100;
+          transition:all 0.3s ease; padding:0 2rem;
+        }
+        .navbar.scrolled {
+          background:rgba(13,17,23,0.96);
+          backdrop-filter:blur(16px);
+          box-shadow:0 2px 30px rgba(0,0,0,0.3);
+        }
+        .navbar.top { background:transparent; }
+        .navbar-inner {
+          max-width:1200px; margin:0 auto;
+          display:flex; align-items:center; gap:1.5rem; padding:1rem 0;
+        }
+        .nav-logo {
+          font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700;
+          color:#c8a96e; cursor:pointer; white-space:nowrap; flex-shrink:0;
+          background:none; border:none;
+        }
+        .nav-links { display:flex; gap:0.2rem; flex-shrink:0; flex-wrap:wrap; }
+        .nav-link {
+          background:none; border:none; cursor:pointer;
+          color:rgba(255,255,255,0.65); font-size:0.78rem;
+          padding:0.35rem 0.6rem; border-radius:6px;
+          transition:all 0.2s; font-family:'DM Sans',sans-serif; white-space:nowrap;
+        }
+        .nav-link:hover, .nav-link.active { color:#c8a96e; background:rgba(200,169,110,0.1); }
+        .nav-search { flex:1; position:relative; min-width:160px; }
+        .nav-search input {
+          width:100%; padding:0.5rem 1rem 0.5rem 2.2rem;
+          background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+          border-radius:8px; color:#fff; font-size:0.83rem;
+          font-family:'DM Sans',sans-serif; outline:none; transition:all 0.2s;
+        }
+        .nav-search input::placeholder { color:rgba(255,255,255,0.3); }
+        .nav-search input:focus { background:rgba(255,255,255,0.12); border-color:rgba(200,169,110,0.4); }
+        .search-icon { position:absolute; left:0.65rem; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.85rem; pointer-events:none; }
 
-      {/* Grid */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:24 }}>
-        {filtered.map(frame => {
-          const tc = tagColors[frame.tag] || {};
-          return (
-            <div key={frame.id} className="frame-card" onClick={() => onSelectFrame(frame)}>
-              <div style={{
-                background:`linear-gradient(135deg, ${C.lilaClaro}80 0%, #F5F0FF 100%)`,
-                padding:"40px 20px", display:"flex", alignItems:"center",
-                justifyContent:"center", borderBottom:`2.5px solid ${C.negro}`,
-                minHeight:180, position:"relative",
-              }}>
-                {frame.tag && (
-                  <span style={{
-                    position:"absolute", top:14, right:14,
-                    background: tc.bg, color: tc.color,
-                    fontFamily:"'Nunito',sans-serif", fontWeight:900,
-                    fontSize:11, padding:"4px 12px", borderRadius:999,
-                    border:`2px solid ${C.negro}`,
-                  }}>{frame.tag}</span>
-                )}
-                <FrameSVG frame={frame} size={160} />
+        .hero {
+          position:relative; min-height:100vh;
+          display:flex; align-items:center; overflow:hidden; background:#0d1117;
+        }
+        .hero-bg {
+          position:absolute; inset:0;
+          background-image:
+            linear-gradient(135deg,rgba(10,10,30,0.88) 0%,rgba(10,10,30,0.4) 60%,rgba(10,10,30,0.75) 100%),
+            url('https://images.unsplash.com/photo-1762718900539-c51799fd71b3?w=1600');
+          background-size:cover; background-position:center;
+          animation:slowZoom 18s ease-in-out infinite alternate;
+        }
+        @keyframes slowZoom { from{transform:scale(1.05)} to{transform:scale(1.12)} }
+        .hero-inner {
+          position:relative; z-index:2; max-width:1100px; margin:0 auto;
+          padding:8rem 2rem 5rem; display:grid; grid-template-columns:1fr 1fr;
+          gap:4rem; align-items:center; width:100%;
+        }
+        .hero-badge {
+          display:inline-flex; align-items:center; gap:0.5rem;
+          background:rgba(200,169,110,0.15); border:1px solid rgba(200,169,110,0.4);
+          color:#c8a96e; padding:0.4rem 1rem; border-radius:100px;
+          font-size:0.78rem; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:1.5rem;
+        }
+        .hero-title { font-family:'Playfair Display',serif; font-size:clamp(2.8rem,5vw,4.5rem); font-weight:700; color:#fff; line-height:1.1; margin-bottom:1rem; }
+        .hero-title span { color:#c8a96e; font-style:italic; }
+        .hero-tagline { font-family:'Playfair Display',serif; font-style:italic; font-size:1.1rem; color:rgba(255,255,255,0.65); margin-bottom:1.25rem; }
+        .hero-desc { color:rgba(255,255,255,0.55); font-size:0.95rem; line-height:1.75; margin-bottom:2.5rem; font-weight:300; }
+        .hero-btn {
+          display:inline-flex; align-items:center; gap:0.6rem;
+          background:#c8a96e; color:#0d1117; padding:0.9rem 2rem;
+          border-radius:6px; font-weight:600; font-size:0.9rem;
+          border:none; cursor:pointer; transition:all 0.3s ease;
+        }
+        .hero-btn:hover { background:#d4b87c; transform:translateY(-2px); box-shadow:0 12px 40px rgba(200,169,110,0.35); }
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; }
+        .stat-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(12px); border-radius:12px; padding:1.5rem; text-align:center; }
+        .stat-num { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:700; color:#c8a96e; line-height:1; margin-bottom:0.3rem; }
+        .stat-lbl { color:rgba(255,255,255,0.45); font-size:0.75rem; letter-spacing:0.08em; text-transform:uppercase; }
+
+        .section-label { display:block; text-align:center; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:#c8a96e; margin-bottom:0.6rem; }
+        .section-title { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:600; text-align:center; color:#1a1a2e; margin-bottom:0.75rem; }
+        .section-sub { text-align:center; color:#888; font-size:0.95rem; max-width:500px; margin:0 auto 3.5rem; line-height:1.7; font-weight:300; }
+
+        .features { padding:6rem 2rem; background:#faf9f7; }
+        .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.75rem; max-width:1050px; margin:0 auto; }
+        .feature-card { background:#fff; border:1px solid #eee; border-radius:16px; padding:2.25rem 1.75rem; text-align:center; transition:all 0.3s ease; position:relative; overflow:hidden; }
+        .feature-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#c8a96e,#d4b87c); transform:scaleX(0); transition:transform 0.3s ease; }
+        .feature-card:hover { transform:translateY(-6px); box-shadow:0 20px 60px rgba(0,0,0,0.07); }
+        .feature-card:hover::before { transform:scaleX(1); }
+        .feature-icon { width:64px; height:64px; background:linear-gradient(135deg,#fdf6e3,#f5e6c8); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem; font-size:1.75rem; }
+        .feature-title { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:600; color:#1a1a2e; margin-bottom:0.6rem; }
+        .feature-desc { color:#999; font-size:0.88rem; line-height:1.7; font-weight:300; }
+
+        .categories { padding:6rem 2rem; background:#fff; }
+        .cat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; max-width:1150px; margin:0 auto; }
+        .cat-card { position:relative; overflow:hidden; border-radius:13px; display:block; aspect-ratio:1; background:#111; cursor:pointer; border:none; padding:0; }
+        .cat-card:first-child { grid-column:span 2; aspect-ratio:2/1; }
+        .cat-card img { width:100%; height:100%; object-fit:cover; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),opacity 0.3s; opacity:0.75; }
+        .cat-card:hover img { transform:scale(1.08); opacity:0.55; }
+        .cat-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 55%); display:flex; flex-direction:column; justify-content:flex-end; padding:1.4rem; }
+        .cat-accent { width:22px; height:3px; border-radius:2px; margin-bottom:0.5rem; transition:width 0.3s ease; }
+        .cat-card:hover .cat-accent { width:38px; }
+        .cat-name { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:600; color:#fff; margin-bottom:0.2rem; }
+        .cat-desc { color:rgba(255,255,255,0.65); font-size:0.8rem; font-weight:300; }
+        .cat-arrow { position:absolute; top:1rem; right:1rem; width:32px; height:32px; background:rgba(255,255,255,0.12); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:0.9rem; opacity:0; transition:all 0.3s; }
+        .cat-card:hover .cat-arrow { opacity:1; }
+
+        .treatments { padding:6rem 2rem; background:#0d1117; }
+        .treatments .section-label { color:#c8a96e; }
+        .treatments .section-title { color:#fff; }
+        .treatments .section-sub { color:rgba(255,255,255,0.4); }
+        .treat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.25rem; max-width:900px; margin:0 auto; }
+        .treat-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1.75rem; display:flex; gap:1.1rem; transition:all 0.3s ease; }
+        .treat-card:hover { border-color:rgba(200,169,110,0.3); transform:translateY(-3px); box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+        .treat-emoji { font-size:1.9rem; line-height:1; flex-shrink:0; }
+        .treat-title { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:600; color:#fff; margin-bottom:0.4rem; }
+        .treat-desc { color:rgba(255,255,255,0.45); font-size:0.85rem; line-height:1.65; font-weight:300; }
+        .treat-note { max-width:680px; margin:2.5rem auto 0; background:rgba(200,169,110,0.07); border:1px solid rgba(200,169,110,0.2); border-radius:12px; padding:1.6rem 2rem; text-align:center; }
+        .treat-note h3 { font-family:'Playfair Display',serif; font-size:1rem; color:#c8a96e; margin-bottom:0.5rem; }
+        .treat-note p { color:rgba(255,255,255,0.4); font-size:0.85rem; line-height:1.7; font-weight:300; }
+
+        .mission { padding:6rem 2rem; background:#faf9f7; }
+        .mission-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:980px; margin:0 auto; }
+        .mission-card { background:#fff; border-radius:18px; padding:2.75rem; border:1px solid #eee; position:relative; overflow:hidden; transition:all 0.3s ease; }
+        .mission-card:hover { transform:translateY(-4px); box-shadow:0 24px 60px rgba(0,0,0,0.07); }
+        .mission-bar { position:absolute; top:0; left:0; width:5px; height:100%; background:linear-gradient(to bottom,#c8a96e,#d4b87c); border-radius:18px 0 0 18px; }
+        .mission-lbl { font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; color:#c8a96e; margin-bottom:0.6rem; }
+        .mission-title { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:600; color:#1a1a2e; margin-bottom:0.9rem; }
+        .mission-text { color:#888; line-height:1.8; font-size:0.92rem; font-weight:300; }
+
+        .cat-page { min-height:100vh; background:#f8f7f5; padding-top:80px; }
+        .cat-page-hero { background:#0d1117; padding:3rem 2rem 2.5rem; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .cat-page-inner { max-width:1150px; margin:0 auto; }
+        .breadcrumb { display:flex; align-items:center; gap:0.5rem; margin-bottom:1.25rem; }
+        .breadcrumb-btn { background:none; border:none; cursor:pointer; color:rgba(255,255,255,0.4); font-size:0.82rem; font-family:'DM Sans',sans-serif; padding:0; transition:color 0.2s; }
+        .breadcrumb-btn:hover { color:#c8a96e; }
+        .breadcrumb-sep { color:rgba(255,255,255,0.2); font-size:0.75rem; }
+        .breadcrumb-current { color:#c8a96e; font-size:0.82rem; }
+        .cat-page-title { font-family:'Playfair Display',serif; font-size:clamp(2rem,4vw,3.5rem); font-weight:700; color:#fff; margin-bottom:0.5rem; }
+        .cat-page-sub { color:rgba(255,255,255,0.4); font-size:0.9rem; font-weight:300; }
+        .products-section { padding:3rem 2rem; max-width:1150px; margin:0 auto; }
+        .products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.5rem; }
+        .product-card { background:#fff; border-radius:14px; overflow:hidden; border:1px solid #eee; transition:all 0.3s ease; cursor:default; }
+        .product-card:hover { transform:translateY(-5px); box-shadow:0 16px 48px rgba(0,0,0,0.1); }
+        .product-img { aspect-ratio:1; overflow:hidden; background:#f0ede8; }
+        .product-img img { width:100%; height:100%; object-fit:cover; transition:transform 0.5s ease; }
+        .product-card:hover .product-img img { transform:scale(1.07); }
+        .product-info { padding:1.25rem; }
+        .product-name { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:600; color:#1a1a2e; margin-bottom:0.35rem; }
+        .product-desc { color:#aaa; font-size:0.82rem; line-height:1.5; margin-bottom:1rem; font-weight:300; }
+        .product-price { font-size:1.2rem; font-weight:700; color:#c8a96e; }
+        .product-price.service { font-size:0.85rem; color:#e8a87c; font-weight:500; }
+        .empty-state { text-align:center; padding:5rem 2rem; color:#bbb; }
+        .empty-state div { font-size:3rem; margin-bottom:1rem; }
+
+        @media (max-width:900px) {
+          .hero-inner { grid-template-columns:1fr; text-align:center; padding:7rem 1.5rem 4rem; }
+          .features-grid { grid-template-columns:1fr; max-width:420px; margin:0 auto; }
+          .cat-grid { grid-template-columns:repeat(2,1fr); }
+          .cat-card:first-child { grid-column:span 2; }
+          .treat-grid { grid-template-columns:1fr; }
+          .mission-grid { grid-template-columns:1fr; }
+          .nav-links { display:none; }
+        }
+        @media (max-width:540px) {
+          .cat-grid { grid-template-columns:1fr; }
+          .cat-card:first-child { grid-column:span 1; aspect-ratio:1; }
+          .stats-grid { grid-template-columns:1fr; }
+          .products-grid { grid-template-columns:repeat(2,1fr); }
+        }
+      `}</style>
+
+      {/* ── NAVBAR FIJA ── */}
+      <nav className={`navbar ${scrolled || page !== "home" ? "scrolled" : "top"}`}>
+        <div className="navbar-inner">
+          <button className="nav-logo" onClick={() => navigate("home")}>Óptica Lain</button>
+          <div className="nav-links">
+            {categories.map(c => (
+              <button key={c.id} className={`nav-link ${page === c.id ? "active" : ""}`} onClick={() => navigate(c.id)}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+          <div className="nav-search">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder={page === "home" ? "Buscar categorías..." : `Buscar en ${currentCategory?.name}...`}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+      </nav>
+
+      {/* ── HOME ── */}
+      {page === "home" && (
+        <>
+          <section className="hero">
+            <div className="hero-bg" />
+            <div className="hero-inner">
+              <div>
+                <div className="hero-badge">✨ Óptica Lain</div>
+                <h1 className="hero-title">Ve el mundo<br />con <span>claridad</span></h1>
+                <p className="hero-tagline">"Te vez bien, te queremos bien"</p>
+                <p className="hero-desc">Armazones, micas y tratamientos de alta calidad. Asesoría personalizada para cada necesidad visual. Tu salud ocular, nuestra prioridad.</p>
+                <button className="hero-btn" onClick={() => document.getElementById("categorias").scrollIntoView({ behavior:"smooth" })}>
+                  Explorar catálogo →
+                </button>
               </div>
-              <div style={{ padding:20 }}>
-                <h3 style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:18, marginBottom:4 }}>
-                  {frame.name}
-                </h3>
-                <div style={{ fontSize:13, color:"#888", marginBottom:14, fontWeight:600 }}>
-                  {{ metal:"Marco Metal", acetato:"Acetato Italiano", "3piezas":"3 Piezas Rimless", ninos:"Lentes Niños" }[frame.tipo]}
+              <div className="stats-grid">
+                <div className="stat-card"><div className="stat-num">9+</div><div className="stat-lbl">Categorías</div></div>
+                <div className="stat-card"><div className="stat-num">4</div><div className="stat-lbl">Tratamientos</div></div>
+                <div className="stat-card"><div className="stat-num">∞</div><div className="stat-lbl">Satisfacción</div></div>
+              </div>
+            </div>
+          </section>
+
+          <section className="features">
+            <span className="section-label">¿Por qué elegirnos?</span>
+            <h2 className="section-title">Lo que nos distingue</h2>
+            <p className="section-sub">Combinamos tecnología, estilo y atención personalizada para brindarte la mejor experiencia óptica.</p>
+            <div className="features-grid">
+              {[
+                { icon:"👁️", title:"Armazones de Calidad",   desc:"Amplia selección en acetato, metal, 3 piezas y más. Diseños para toda la familia." },
+                { icon:"🏆", title:"Micas y Tratamientos",    desc:"Antirreflejante, fotocromático, blue light y polarizado. La protección que necesitas." },
+                { icon:"❤️", title:"Atención Personalizada",  desc:"Asesoría experta para encontrar el producto perfecto según tus necesidades." },
+              ].map((f,i) => (
+                <div className="feature-card" key={i}>
+                  <div className="feature-icon">{f.icon}</div>
+                  <div className="feature-title">{f.title}</div>
+                  <p className="feature-desc">{f.desc}</p>
                 </div>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <span style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:22 }}>
-                    ${frame.precio.toLocaleString("es-MX")}
-                  </span>
-                  <span style={{
-                    width:22, height:22, borderRadius:"50%",
-                    background: frame.color, border:`2px solid ${C.negro}`,
-                    display:"inline-block",
-                  }} title={frame.colorName} />
+              ))}
+            </div>
+          </section>
+
+          <section className="categories" id="categorias">
+            <span className="section-label">Colección</span>
+            <h2 className="section-title">Explora nuestras categorías</h2>
+            <p className="section-sub">Haz clic en cualquier categoría para ver sus productos.</p>
+            <div className="cat-grid">
+              {(search ? filteredCategories : categories).map((cat) => (
+                <button className="cat-card" key={cat.id} onClick={() => navigate(cat.id)}>
+                  <img src={cat.image} alt={cat.name} />
+                  <div className="cat-overlay">
+                    <div className="cat-accent" style={{ background:cat.accent }} />
+                    <div className="cat-name">{cat.name}</div>
+                    <div className="cat-desc">{cat.description}</div>
+                  </div>
+                  <div className="cat-arrow">→</div>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="treatments">
+            <span className="section-label">Protección visual</span>
+            <h2 className="section-title">Tratamientos para tus lentes</h2>
+            <p className="section-sub">Cada tratamiento está diseñado para mejorar tu experiencia visual.</p>
+            <div className="treat-grid">
+              {treatments.map((t,i) => (
+                <div className="treat-card" key={i}>
+                  <div className="treat-emoji">{t.emoji}</div>
+                  <div>
+                    <div className="treat-title">{t.title}</div>
+                    <p className="treat-desc">{t.description}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+            <div className="treat-note">
+              <h3>💡 ¿Puedo combinar tratamientos?</h3>
+              <p>¡Sí! Muchos tratamientos se pueden combinar. Consulta con nuestro equipo para la mejor combinación.</p>
+            </div>
+          </section>
+
+          <section className="mission">
+            <span className="section-label">Nuestra esencia</span>
+            <h2 className="section-title" style={{ marginBottom:"3rem" }}>Óptica Lain</h2>
+            <div className="mission-grid">
+              <div className="mission-card">
+                <div className="mission-bar" />
+                <div className="mission-lbl">Misión</div>
+                <div className="mission-title">Cuidamos tu visión</div>
+                <p className="mission-text">Proporcionar productos ópticos de la más alta calidad, combinando tecnología de vanguardia con un servicio personalizado.</p>
+              </div>
+              <div className="mission-card">
+                <div className="mission-bar" />
+                <div className="mission-lbl">Visión</div>
+                <div className="mission-title">Líderes en excelencia</div>
+                <p className="mission-text">Ser la óptica líder reconocida por la excelencia en productos y servicios, innovando constantemente para satisfacer las necesidades visuales de nuestra comunidad.</p>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
+          </section>
+        </>
+      )}
 
-// ─── TRATAMIENTOS ─────────────────────────────────────────────────────────────
-function Tratamientos() {
-  return (
-    <section id="tratamientos" style={{ padding:"80px 40px", background: C.grisF }}>
-      <span style={{
-        display:"inline-flex", alignItems:"center", gap:8,
-        fontFamily:"'Nunito',sans-serif", fontWeight:900,
-        fontSize:12, letterSpacing:"0.12em", textTransform:"uppercase",
-        background: C.lilaClaro, border:`2px solid ${C.morado}`,
-        borderRadius:999, padding:"6px 16px", marginBottom:20, color: C.morado,
-      }}>
-        <span style={{ width:8, height:8, borderRadius:"50%", background: C.lila }} />
-        Protege tu vista
-      </span>
-
-      <h2 style={{
-        fontFamily:"'Nunito',sans-serif", fontWeight:900,
-        fontSize:"clamp(32px,4vw,54px)", letterSpacing:"-0.03em",
-        marginBottom:48, lineHeight:1.1, color: C.negro,
-      }}>
-        Tratamientos que<br />
-        <em style={{ color: C.lila, fontStyle:"italic" }}>hacen la diferencia</em>
-      </h2>
-
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:20 }}>
-        {TRATS.map(t => (
-          <div key={t.id} className="trat-card">
-            <div style={{
-              width:52, height:52, flexShrink:0,
-              background: C.lilaClaro, border:`2px solid ${C.morado}`,
-              borderRadius:14, display:"flex", alignItems:"center",
-              justifyContent:"center", fontSize:22,
-            }}>{t.icon}</div>
-            <div>
-              <h3 style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:16, marginBottom:6 }}>
-                {t.nombre}
-              </h3>
-              <p style={{ fontSize:14, color:"#666", lineHeight:1.6 }}>
-                {{ ar:"Elimina reflejos molestos y cubre un 50% de la luz UV. Perfecto para pantallas y manejar de noche.",
-                   blue:"Bloquea la luz azul de celulares y computadoras, cubriendo un 80% de la luz UV. Menos fatiga visual.",
-                   fotoblue:"Se oscurece al salir al sol y protege de luz azul en interiores.",
-                   polariz:"Elimina el deslumbramiento en días soleados. Ideal para el exterior.",
-                }[t.id]}
-              </p>
-              <span style={{
-                display:"inline-block", marginTop:10,
-                background: C.lilaClaro, border:`1.5px solid ${C.morado}`,
-                borderRadius:999, padding:"3px 14px",
-                fontFamily:"'Nunito',sans-serif", fontWeight:900,
-                fontSize:13, color: C.morado,
-              }}>+${t.precio}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ─── PROCESO ──────────────────────────────────────────────────────────────────
-function Proceso() {
-  const steps = [
-    { num:"01", title:"Elige tu marco", desc:"Explora nuestra colección de metal, acetato, 3 piezas y lentes para niños." },
-    { num:"02", title:"Configura tus lentes", desc:"Escoge graduación, tipo de lente (monofocal, bifocal o biselado) y tratamientos." },
-    { num:"03", title:"Ve tu precio", desc:"La calculadora muestra el total exacto en tiempo real, sin sorpresas." },
-    { num:"04", title:"Pide por WhatsApp", desc:"Te mandamos un mensaje con todos los detalles y confirmamos en breve." },
-  ];
-  return (
-    <section id="proceso" style={{ padding:"80px 40px", background: C.negro, color: C.blanco }}>
-      <span style={{
-        display:"inline-flex", alignItems:"center", gap:8,
-        fontFamily:"'Nunito',sans-serif", fontWeight:900,
-        fontSize:12, letterSpacing:"0.12em", textTransform:"uppercase",
-        background:"#1C1020", border:"2px solid #3D2060",
-        borderRadius:999, padding:"6px 16px", marginBottom:20, color:"#C084FC",
-      }}>
-        <span style={{ width:8, height:8, borderRadius:"50%", background: C.lila }} />
-        Súper fácil
-      </span>
-      <h2 style={{
-        fontFamily:"'Nunito',sans-serif", fontWeight:900,
-        fontSize:"clamp(34px,4vw,56px)", letterSpacing:"-0.03em",
-        marginBottom:56, lineHeight:1.1,
-      }}>
-        Tu pedido en{" "}
-        <em style={{ color: C.lila, fontStyle:"italic" }}>4 pasos</em>
-      </h2>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:24 }}>
-        {steps.map(s => (
-          <div key={s.num} className="step-card">
-            <div style={{
-              fontFamily:"'Nunito',sans-serif", fontWeight:900,
-              fontSize:52, color: C.lila, lineHeight:1, marginBottom:20,
-            }}>{s.num}</div>
-            <h3 style={{ fontSize:17, fontWeight:900, marginBottom:10, color: C.blanco }}>{s.title}</h3>
-            <p style={{ fontSize:14, color:"#999", lineHeight:1.65 }}>{s.desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ─── MANIFESTO ────────────────────────────────────────────────────────────────
-function Manifesto({ onPedido }) {
-  return (
-    <div style={{
-      padding:"80px 40px", textAlign:"center",
-      background:`linear-gradient(135deg, ${C.morado} 0%, ${C.lila} 100%)`,
-      borderTop:`2.5px solid ${C.negro}`, borderBottom:`2.5px solid ${C.negro}`,
-    }}>
-      <h2 style={{
-        fontFamily:"'Nunito',sans-serif", fontWeight:900, color: C.blanco,
-        fontSize:"clamp(36px,6vw,78px)", lineHeight:1.05,
-        letterSpacing:"-0.03em", maxWidth:900, margin:"0 auto 28px",
-      }}>
-        Somos{" "}
-        <em style={{ fontStyle:"italic", color: C.lilaClaro }}>#CuatroOjos</em>
-        <br />y a mucha honra.
-      </h2>
-      <p style={{ fontSize:18, color:"rgba(255,255,255,.85)", maxWidth:520, margin:"0 auto 40px", lineHeight:1.7 }}>
-        Lentes chidos, precio justo y sin rodeos. Configura tu pedido ahora.
-      </p>
-      <button className="btn" onClick={onPedido}
-        style={{ background: C.blanco, color: C.morado, borderColor: C.negro, fontSize:16, padding:"14px 36px" }}>
-        ¡Armar mi pedido ya! 🚀
-      </button>
-    </div>
-  );
-}
-
-// ─── FOOTER ───────────────────────────────────────────────────────────────────
-function Footer() {
-  const cols = [
-    { title:"Productos", links:["Metal","Acetato","3 Piezas","Niños"] },
-    { title:"Tratamientos", links:["Antirreflejante","Blue","Foto Blue","Polarizado"] },
-    { title:"Contacto", links:["WhatsApp","Cómo funciona","Instagram"] },
-  ];
-  return (
-    <footer style={{ background: C.negro, color: C.blanco, padding:"60px 40px 36px" }}>
-      <div style={{
-        display:"flex", justifyContent:"space-between", alignItems:"flex-start",
-        paddingBottom:40, borderBottom:"1px solid #2a2a2a", marginBottom:32,
-        gap:40, flexWrap:"wrap",
-      }}>
-        <div>
-          <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:28, marginBottom:12 }}>
-            Óptica <span style={{ color: C.lila }}>Lain</span>
-          </div>
-          <p style={{ fontSize:14, color:"#888", maxWidth:220, lineHeight:1.6 }}>
-            Mazatlán, Sinaloa — Lentes para ver(te) mejor desde tu ciudad.
-          </p>
-        </div>
-        <div style={{ display:"flex", gap:60 }}>
-          {cols.map(col => (
-            <div key={col.title}>
-              <h4 style={{
-                fontFamily:"'Nunito',sans-serif", fontWeight:900,
-                fontSize:12, letterSpacing:"0.1em", textTransform:"uppercase",
-                color:"#666", marginBottom:16,
-              }}>{col.title}</h4>
-              {col.links.map(l => (
-                <div key={l} style={{ fontSize:14, color:"#bbb", marginBottom:10, cursor:"pointer",
-                  transition:"color .15s" }}
-                  onMouseEnter={e => e.currentTarget.style.color = C.lila}
-                  onMouseLeave={e => e.currentTarget.style.color = "#bbb"}
-                >{l}</div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, color:"#666", flexWrap:"wrap", gap:12 }}>
-        <span>© 2025 Óptica Lain · Mazatlán, Sinaloa</span>
-        <span style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, color: C.lila }}>
-          Lentes para ver(te) mejor 👓
-        </span>
-      </div>
-    </footer>
-  );
-}
-
-// ─── MODAL PEDIDO ─────────────────────────────────────────────────────────────
-function Modal({ open, onClose, initialFrame }) {
-  const [marco, setMarco] = useState(initialFrame?.id || null);
-  const [lente, setLente] = useState("mono");
-  const [grad, setGrad] = useState("baja");
-  const [tratas, setTratas] = useState(new Set());
-  const [nombre, setNombre] = useState("");
-  const [tel, setTel] = useState("");
-  const [notas, setNotas] = useState("");
-
-  const toggleTrat = (id) => {
-    setTratas(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const precioMarco  = FRAMES.find(f => f.id === marco)?.precio || 0;
-  const precioLente  = LENTES.find(l => l.id === lente)?.precio || 0;
-  const precioGrad   = GRADS.find(g => g.id === grad)?.precio || 0;
-  const precioTrats  = [...tratas].reduce((a, id) => a + (TRATS.find(t => t.id === id)?.precio || 0), 0);
-  const total        = precioMarco + precioLente + precioGrad + precioTrats;
-
-  const enviar = () => {
-    const f = FRAMES.find(x => x.id === marco);
-    if (!f) { alert("👓 Elige un marco primero"); return; }
-    const tratasStr = [...tratas].map(id => TRATS.find(t => t.id === id)?.nombre).join(", ") || "Ninguno";
-    const msg = `👓 *NUEVO PEDIDO — Óptica Lain*\n━━━━━━━━━━━━━━━━━\n👤 ${nombre||"Sin nombre"}\n📞 ${tel||"Sin teléfono"}\n\n🕶️ *Marco:* ${f.name} — $${f.precio.toLocaleString("es-MX")}\n👁️ *Lentes:* ${LENTES.find(l=>l.id===lente)?.nombre}\n📊 *Graduación:* ${GRADS.find(g=>g.id===grad)?.nombre}\n✨ *Tratamientos:* ${tratasStr}\n\n💰 *TOTAL: $${total.toLocaleString("es-MX")} MXN*\n━━━━━━━━━━━━━━━━━\n📝 ${notas||"Sin notas"}\n\n_Favor confirmar disponibilidad_ 🙏`;
-    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
-  if (!open) return null;
-
-  const Pill = ({ label, sel, onClick }) => (
-    <button className={`opt-pill ${sel?"sel":""}`} onClick={onClick}>{label}</button>
-  );
-
-  return (
-    <div onClick={e => e.target === e.currentTarget && onClose()} style={{
-      position:"fixed", inset:0, zIndex:200,
-      background:"rgba(0,0,0,.6)", display:"flex",
-      alignItems:"center", justifyContent:"center", padding:20,
-    }}>
-      <div style={{
-        background: C.blanco, border:`2.5px solid ${C.negro}`,
-        borderRadius:28, width:"100%", maxWidth:640,
-        maxHeight:"90vh", overflowY:"auto",
-        boxShadow:`10px 10px 0 ${C.negro}`,
-      }}>
-        {/* Header */}
-        <div style={{ padding:"28px 32px 0", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-          <div>
-            <span style={{
-              display:"inline-block", background: C.lilaClaro, color: C.morado,
-              fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:11,
-              padding:"4px 14px", borderRadius:999, border:`2px solid ${C.morado}`,
-              marginBottom:10, letterSpacing:"0.08em", textTransform:"uppercase",
-            }}>Calculadora de precio</span>
-            <h2 style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:24, letterSpacing:"-0.02em", color: C.negro }}>
-              Arma tu pedido 👓
-            </h2>
-          </div>
-          <button onClick={onClose} style={{
-            width:38, height:38, borderRadius:"50%",
-            border:`2px solid ${C.negro}`, background: C.blanco,
-            fontSize:18, cursor:"pointer", display:"flex",
-            alignItems:"center", justifyContent:"center", fontWeight:900,
-            flexShrink:0, transition:"background .15s",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.background=C.negro; e.currentTarget.style.color=C.blanco; }}
-            onMouseLeave={e => { e.currentTarget.style.background=C.blanco; e.currentTarget.style.color=C.negro; }}
-          >✕</button>
-        </div>
-
-        <div style={{ padding:"24px 32px 32px" }}>
-          {/* Marco */}
-          <div style={{ marginBottom:24 }}>
-            <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:12,
-              textTransform:"uppercase", letterSpacing:"0.08em", color:"#888", marginBottom:12 }}>
-              1. Elige tu marco
-            </div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-              {FRAMES.map(f => (
-                <Pill key={f.id}
-                  label={<><span style={{ width:10, height:10, borderRadius:"50%", background:f.color, border:"1.5px solid #ccc", display:"inline-block" }} /> {f.name}</>}
-                  sel={marco === f.id}
-                  onClick={() => setMarco(f.id)} />
-              ))}
-            </div>
-          </div>
-
-          {/* Lente */}
-          <div style={{ marginBottom:24 }}>
-            <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:12,
-              textTransform:"uppercase", letterSpacing:"0.08em", color:"#888", marginBottom:12 }}>
-              2. Tipo de lentes
-            </div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-              {LENTES.map(l => (
-                <Pill key={l.id} label={`${l.nombre}${l.precio>0?` +$${l.precio}`:""}`}
-                  sel={lente===l.id} onClick={() => setLente(l.id)} />
-              ))}
-            </div>
-          </div>
-
-          {/* Graduación */}
-          <div style={{ marginBottom:24 }}>
-            <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:12,
-              textTransform:"uppercase", letterSpacing:"0.08em", color:"#888", marginBottom:12 }}>
-              3. Graduación
-            </div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-              {GRADS.map(g => (
-                <Pill key={g.id} label={`${g.nombre}${g.precio>0?` +$${g.precio}`:""}`}
-                  sel={grad===g.id} onClick={() => setGrad(g.id)} />
-              ))}
-            </div>
-          </div>
-
-          {/* Tratamientos */}
-          <div style={{ marginBottom:24 }}>
-            <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:12,
-              textTransform:"uppercase", letterSpacing:"0.08em", color:"#888", marginBottom:12 }}>
-              4. Tratamientos (puedes elegir varios)
-            </div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-              {TRATS.map(t => (
-                <Pill key={t.id} label={`${t.nombre} +$${t.precio}`}
-                  sel={tratas.has(t.id)} onClick={() => toggleTrat(t.id)} />
-              ))}
-            </div>
-          </div>
-
-          {/* Precio */}
-          <div style={{
-            background: C.grisF, border:`2px solid ${C.negro}`,
-            borderRadius:18, padding:"20px 24px",
-            display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24,
-          }}>
-            <div>
-              <div style={{ fontSize:14, color:"#888", fontWeight:600 }}>Tu cotización estimada</div>
-              <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:36, color: C.lila }}>
-                ${total.toLocaleString("es-MX")}
+      {/* ── PÁGINA DE CATEGORÍA ── */}
+      {page !== "home" && currentCategory && (
+        <div className="cat-page">
+          <div className="cat-page-hero">
+            <div className="cat-page-inner">
+              <div className="breadcrumb">
+                <button className="breadcrumb-btn" onClick={() => navigate("home")}>Inicio</button>
+                <span className="breadcrumb-sep">›</span>
+                <span className="breadcrumb-current">{currentCategory.name}</span>
               </div>
+              <h1 className="cat-page-title">{currentCategory.name}</h1>
+              <p className="cat-page-sub">{currentCategory.description} — {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""}</p>
             </div>
-            <div style={{ textAlign:"right", fontSize:13, color:"#aaa", maxWidth:160, lineHeight:1.5 }}>
-              Precio final confirmado al revisar inventario
-            </div>
           </div>
-
-          {/* Datos */}
-          <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:12,
-            textTransform:"uppercase", letterSpacing:"0.08em", color:"#888", marginBottom:12 }}>
-            5. Tus datos (opcional)
+          <div className="products-section">
+            {filteredProducts.length > 0 ? (
+              <div className="products-grid">
+                {filteredProducts.map(p => (
+                  <div className="product-card" key={p.id}>
+                    <div className="product-img"><img src={p.image} alt={p.name} /></div>
+                    <div className="product-info">
+                      <div className="product-name">{p.name}</div>
+                      <p className="product-desc">{p.desc}</p>
+                      {p.price > 0
+                        ? <div className="product-price">${p.price.toLocaleString()} MXN</div>
+                        : <div className="product-price service">Precio según evaluación</div>
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <div>🔍</div>
+                <p>No se encontraron productos para "{search}"</p>
+              </div>
+            )}
           </div>
-          <input className="modal-input" placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)} />
-          <input className="modal-input" placeholder="Tu teléfono" value={tel} onChange={e=>setTel(e.target.value)} />
-          <textarea className="modal-input" placeholder="Notas: color, receta, etc." rows={2}
-            value={notas} onChange={e=>setNotas(e.target.value)} style={{ resize:"none" }} />
-
-          {/* Aviso */}
-          <div style={{
-            background:"#FFFBEB", border:"2px solid #FCD34D",
-            borderRadius:12, padding:"12px 16px",
-            fontSize:13, color:"#92400E", marginBottom:20, display:"flex", gap:8,
-          }}>
-            ⏳ Revisaremos disponibilidad en inventario y te confirmamos por WhatsApp en breve.
-          </div>
-
-          {/* Botón WA */}
-          <button onClick={enviar} style={{
-            width:"100%", padding:16,
-            background:"#25D366", color: C.blanco,
-            border:`2px solid ${C.negro}`, borderRadius:999,
-            fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:18,
-            cursor:"pointer", display:"flex", alignItems:"center",
-            justifyContent:"center", gap:10, transition:"transform .15s, box-shadow .15s",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow=`4px 4px 0 ${C.negro}`; }}
-            onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="none"; }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.184 1.62 5.988L.057 23.929l6.062-1.536A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.894a9.869 9.869 0 01-5.031-1.374l-.361-.214-3.741.981.999-3.648-.235-.374A9.869 9.869 0 012.106 12C2.106 6.533 6.533 2.106 12 2.106S21.894 6.533 21.894 12 17.467 21.894 12 21.894z"/>
-            </svg>
-            Enviar pedido por WhatsApp
-          </button>
         </div>
-      </div>
+      )}
     </div>
-  );
-}
-
-// ─── APP ──────────────────────────────────────────────────────────────────────
-export default function App() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedFrame, setSelectedFrame] = useState(null);
-
-  const openModal = (frame = null) => { setSelectedFrame(frame); setModalOpen(true); };
-  const closeModal = () => setModalOpen(false);
-
-  return (
-    <>
-      <GlobalStyles />
-      <Nav onPedido={() => openModal()} />
-      <Hero onPedido={() => openModal()} />
-      <Marquee />
-      <Coleccion onSelectFrame={openModal} />
-      <Tratamientos />
-      <Proceso />
-      <Manifesto onPedido={() => openModal()} />
-      <Footer />
-      <Modal open={modalOpen} onClose={closeModal} initialFrame={selectedFrame} />
-    </>
   );
 }
